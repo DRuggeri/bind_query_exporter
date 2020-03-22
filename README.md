@@ -32,6 +32,8 @@ Flags:
   -h, --help              Show context-sensitive help (also try --help-long and --help-man).
       --log="/var/log/bind/queries.log"
                           Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)
+      --includeFile=""    Path to a file of domain names that this exporter WILL export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE)
+      --excludeFile=""    Path to a file of domain names that this exporter WILL NOT export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE)
       --filter.collectors="Stats, Sites"
                           Comma separated collectors to enable (Stats,Sites) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)
       --metrics.namespace="bind_query"
