@@ -22,6 +22,14 @@ var (
 		"log", "Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)",
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
+	bindQueryIncludeFile = kingpin.Flag(
+		"includeFile", "Path to a file of domain names that this exporter WILL export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE").Default("").String()
+
+	bindQueryExcludeFile = kingpin.Flag(
+		"excludeFile", "Path to a file of domain names that this exporter WILL NOT export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE").Default("").String()
+
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Sites) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
 	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats, Sites").String()
@@ -123,7 +131,7 @@ func main() {
 		bogusChan := make(chan string)
 
 		fmt.Println("Sites")
-		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &bogusChan)
+		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
 		out = make(chan *prometheus.Desc)
 		go eatOutput(out)
 		sitesCollector.Describe(out)
@@ -161,7 +169,7 @@ func main() {
 	if collectorsFilter.Enabled(filters.SitesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &thisChannel)
+		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
 		prometheus.MustRegister(sitesCollector)
 	}
 	if collectorsFilter.Enabled(filters.StatsCollector) {

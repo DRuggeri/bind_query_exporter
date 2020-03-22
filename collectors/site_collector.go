@@ -5,6 +5,8 @@ import (
 	"github.com/prometheus/common/log"
 	"regexp"
 	"time"
+	"os"
+	"bufio"
 )
 
 type SitesCollector struct {
@@ -19,11 +21,29 @@ type SitesCollector struct {
 	lastScrapeDurationSecondsMetric prometheus.Gauge
 }
 
-func NewSitesCollector(namespace string, sender *chan string) *SitesCollector {
+func NewSitesCollector(namespace string, sender *chan string, includeFile string, excludeFile string) *SitesCollector {
 	stats := make(map[string]float64)
+	include := make(map[string]bool)
+	exclude := make(map[string]bool)
+
+	if "" != includeFile {
+		log.Infoln("Will only export sites that ARE in the file ", includeFile)
+		err := makeList(includeFile, &include)
+		if err != nil {
+			log.Errorln("Failed to use include file: ", includeFile, err)
+		}
+	}
+	if "" != excludeFile {
+		log.Infoln("Will only export sites that ARE NOT the file ", excludeFile)
+		err := makeList(excludeFile, &exclude)
+		if err != nil {
+			log.Errorln("Failed to use exclude file: ", excludeFile, err)
+		}
+	}
+
 
 	/* Spin off a thread that will gather our data on every read from the file */
-	go func(sender *chan string, stats *map[string]float64) {
+	go func(sender *chan string, stats *map[string]float64, inc *map[string]bool, exc *map[string]bool) {
 		//22-Mar-2020 14:54:27.568 queries: info: client 192.168.0.1#63519 (www.google.com): query: www.google.com IN A + (192.168.0.100)
 		re := regexp.MustCompile(`query: ([^\s]+)`)
 
@@ -31,10 +51,22 @@ func NewSitesCollector(namespace string, sender *chan string) *SitesCollector {
 			log.Debugln(line)
 			match := re.FindStringSubmatch(line)
 			if len(match) > 0 {
-				(*stats)[match[1]]++
+				site := match[1]
+
+				if len(include) > 0 {
+					if _, ok := include[site]; ok {
+						(*stats)[match[1]]++
+					}
+				} else if len(exclude) > 0 {
+					if _, ok := exclude[site]; !ok {
+						(*stats)[match[1]]++
+					}
+				} else {
+					(*stats)[match[1]]++
+				}
 			}
 		}
-	}(sender, &stats)
+	}(sender, &stats, &include, &exclude)
 
 	sitesMetric := prometheus.NewCounterVec(
 		prometheus.CounterOpts{
@@ -102,6 +134,27 @@ func NewSitesCollector(namespace string, sender *chan string) *SitesCollector {
 		lastScrapeTimestampMetric:       lastScrapeTimestampMetric,
 		lastScrapeDurationSecondsMetric: lastScrapeDurationSecondsMetric,
 	}
+}
+
+func makeList(fileName string, result *map[string]bool) error {
+	file, err := os.Open(fileName)
+	if err != nil {
+		return err
+	}
+
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		log.Debugln("  ", scanner.Text())
+		(*result)[scanner.Text()] = true
+	}
+
+	if err:= scanner.Err(); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (c *SitesCollector) Collect(ch chan<- prometheus.Metric) {
