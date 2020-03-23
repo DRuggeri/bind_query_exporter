@@ -147,7 +147,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Infoln("Starting node_exporter", version.Info())
+	log.Infoln("Starting bind_query_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
 
 	fi, err := os.Stat(*bindQueryLogFile)
