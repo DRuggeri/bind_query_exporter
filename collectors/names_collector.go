@@ -22,7 +22,7 @@ type NamesCollector struct {
 	lastScrapeDurationSecondsMetric prometheus.Gauge
 }
 
-func NewNamesCollector(namespace string, sender *chan string, includeFile string, excludeFile string) *NamesCollector {
+func NewNamesCollector(namespace string, sender *chan string, includeFile string, excludeFile string) (*NamesCollector, error) {
 	stats := make(map[string]float64)
 	include := make(map[string]bool)
 	exclude := make(map[string]bool)
@@ -32,6 +32,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 		err := makeList(includeFile, &include)
 		if err != nil {
 			log.Errorln("Failed to use include file: ", includeFile, err)
+			return nil, err
 		}
 	}
 	if "" != excludeFile {
@@ -39,6 +40,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 		err := makeList(excludeFile, &exclude)
 		if err != nil {
 			log.Errorln("Failed to use exclude file: ", excludeFile, err)
+			return nil, err
 		}
 	}
 
@@ -145,7 +147,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 		lastScrapeErrorMetric:           lastScrapeErrorMetric,
 		lastScrapeTimestampMetric:       lastScrapeTimestampMetric,
 		lastScrapeDurationSecondsMetric: lastScrapeDurationSecondsMetric,
-	}
+	}, nil
 }
 
 func makeList(fileName string, result *map[string]bool) error {

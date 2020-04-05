@@ -138,7 +138,11 @@ func main() {
 		close(out)
 
 		fmt.Println("Names")
-		namesCollector := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 		out = make(chan *prometheus.Desc)
 		go eatOutput(out)
 		namesCollector.Describe(out)
@@ -169,7 +173,11 @@ func main() {
 	if collectorsFilter.Enabled(filters.NamesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		namesCollector := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		if err != nil {
+			log.Error(err)
+			os.Exit(1)
+		}
 		prometheus.MustRegister(namesCollector)
 	}
 	if collectorsFilter.Enabled(filters.StatsCollector) {
