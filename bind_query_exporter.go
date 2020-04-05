@@ -23,12 +23,12 @@ var (
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
 	bindQueryIncludeFile = kingpin.Flag(
-		"includeFile", "Path to a file of domain names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE)",
-	).Envar("BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE").Default("").String()
+		"names.include.file", "Path to a file of domain names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE").Default("").String()
 
 	bindQueryExcludeFile = kingpin.Flag(
-		"excludeFile", "Path to a file of domain names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE)",
-	).Envar("BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE").Default("").String()
+		"names.exclude.file", "Path to a file of domain names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Default("").String()
 
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
