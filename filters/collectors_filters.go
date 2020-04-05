@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	SitesCollector = "Sites"
+	NamesCollector = "Names"
 	StatsCollector = "Stats"
 )
 
@@ -20,8 +20,8 @@ func NewCollectorsFilter(filters []string) (*CollectorsFilter, error) {
 
 	for _, collectorName := range filters {
 		switch strings.Trim(collectorName, " ") {
-		case SitesCollector:
-			collectorsEnabled[SitesCollector] = true
+		case NamesCollector:
+			collectorsEnabled[NamesCollector] = true
 		case StatsCollector:
 			collectorsEnabled[StatsCollector] = true
 		default:

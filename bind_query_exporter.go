@@ -23,16 +23,16 @@ var (
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
 	bindQueryIncludeFile = kingpin.Flag(
-		"includeFile", "Path to a file of domain names that this exporter WILL export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE)",
+		"includeFile", "Path to a file of domain names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_SITE_INCLUDE_FILE").Default("").String()
 
 	bindQueryExcludeFile = kingpin.Flag(
-		"excludeFile", "Path to a file of domain names that this exporter WILL NOT export when the Sites filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE)",
+		"excludeFile", "Path to a file of domain names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_SITE_EXCLUDE_FILE").Default("").String()
 
 	filterCollectors = kingpin.Flag(
-		"filter.collectors", "Comma separated collectors to enable (Stats,Sites) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
-	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats, Sites").String()
+		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
+	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats,Names").String()
 
 	metricsNamespace = kingpin.Flag(
 		"metrics.namespace", "Metrics Namespace ($BIND_QUERY_EXPORTER_METRICS_NAMESPACE)",
@@ -137,11 +137,11 @@ func main() {
 		statsCollector.Describe(out)
 		close(out)
 
-		fmt.Println("Sites")
-		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		fmt.Println("Names")
+		namesCollector := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
 		out = make(chan *prometheus.Desc)
 		go eatOutput(out)
-		sitesCollector.Describe(out)
+		namesCollector.Describe(out)
 		close(out)
 
 		os.Exit(0)
@@ -166,11 +166,11 @@ func main() {
 	}
 
 	var consumers []*chan string
-	if collectorsFilter.Enabled(filters.SitesCollector) {
+	if collectorsFilter.Enabled(filters.NamesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
-		prometheus.MustRegister(sitesCollector)
+		namesCollector := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		prometheus.MustRegister(namesCollector)
 	}
 	if collectorsFilter.Enabled(filters.StatsCollector) {
 		thisChannel := make(chan string)
