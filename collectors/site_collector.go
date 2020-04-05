@@ -73,7 +73,7 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: "sites",
-			Name:      "number",
+			Name:      "names",
 			Help:      "Queries per DNS name",
 		},
 		[]string{"domain"},
@@ -82,8 +82,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	totalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
-			Subsystem: "sites_total",
-			Name:      "number",
+			Subsystem: "sites",
+			Name:      "total",
 			Help:      "Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.",
 		},
 	)
@@ -92,8 +92,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	scrapesTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
-			Subsystem: "sites_scrapes",
-			Name:      "total",
+			Subsystem: "sites",
+			Name:      "scrapes_total",
 			Help:      "Total number of scrapes for BIND sites stats.",
 		},
 	)
@@ -101,8 +101,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	scrapeErrorsTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
-			Subsystem: "sites_scrape_errors",
-			Name:      "total",
+			Subsystem: "sites",
+			Name:      "scrape_errors_total",
 			Help:      "Total number of scrapes errors for BIND sites stats.",
 		},
 	)
@@ -110,8 +110,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	lastScrapeErrorMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_sites_scrape_error",
+			Subsystem: "sites",
+			Name:      "last_scrape_error",
 			Help:      "Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).",
 		},
 	)
@@ -119,8 +119,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	lastScrapeTimestampMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_sites_scrape_timestamp",
+			Subsystem: "sites",
+			Name:      "last_scrape_timestamp",
 			Help:      "Number of seconds since 1970 since last scrape of BIND sites metrics.",
 		},
 	)
@@ -128,8 +128,8 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 	lastScrapeDurationSecondsMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_sites_scrape_duration_seconds",
+			Subsystem: "sites",
+			Name:      "last_scrape_duration_seconds",
 			Help:      "Duration of the last scrape of BIND sites stats.",
 		},
 	)

@@ -60,8 +60,8 @@ func NewStatsCollector(namespace string, sender *chan string) *StatCollector {
 	scrapesTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
-			Subsystem: "stat_scrapes",
-			Name:      "total",
+			Subsystem: "stats",
+			Name:      "scrapes_total",
 			Help:      "Total number of scrapes for BIND query stats.",
 		},
 	)
@@ -69,8 +69,8 @@ func NewStatsCollector(namespace string, sender *chan string) *StatCollector {
 	scrapeErrorsTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
-			Subsystem: "stats_scrape_errors",
-			Name:      "total",
+			Subsystem: "stats",
+			Name:      "scrape_errors_total",
 			Help:      "Total number of scrapes errors for BIND query stats.",
 		},
 	)
@@ -78,8 +78,8 @@ func NewStatsCollector(namespace string, sender *chan string) *StatCollector {
 	lastScrapeErrorMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_stat_scrape_error",
+			Subsystem: "stats",
+			Name:      "last_scrape_error",
 			Help:      "Whether the last scrape of BIND query stats resulted in an error (1 for error, 0 for success).",
 		},
 	)
@@ -87,8 +87,8 @@ func NewStatsCollector(namespace string, sender *chan string) *StatCollector {
 	lastScrapeTimestampMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_stat_scrape_timestamp",
+			Subsystem: "stats",
+			Name:      "last_scrape_timestamp",
 			Help:      "Number of seconds since 1970 since last scrape of BIND qyery stat metrics.",
 		},
 	)
@@ -96,8 +96,8 @@ func NewStatsCollector(namespace string, sender *chan string) *StatCollector {
 	lastScrapeDurationSecondsMetric := prometheus.NewGauge(
 		prometheus.GaugeOpts{
 			Namespace: namespace,
-			Subsystem: "",
-			Name:      "last_stat_scrape_duration_seconds",
+			Subsystem: "stats",
+			Name:      "last_scrape_duration_seconds",
 			Help:      "Duration of the last scrape of BIND query stats.",
 		},
 	)

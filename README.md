@@ -66,26 +66,26 @@ This collector counts the number of DNS queries the DNS server receives by type.
 ```
   bind_query_stats_total - Total queries recieved
   bind_query_stats_total_by_type - Total queries recieved by type of query
-  bind_query_stat_scrapes_total - Total number of scrapes for BIND query stats.
+  bind_query_stats_scrapes_total - Total number of scrapes for BIND query stats.
   bind_query_stats_scrape_errors_total - Total number of scrapes errors for BIND query stats.
-  bind_query_last_stat_scrape_error - Whether the last scrape of BIND query stats resulted in an error (1 for error, 0 for success).
-  bind_query_last_stat_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND qyery stat metrics.
-  bind_query_last_stat_scrape_duration_seconds - Duration of the last scrape of BIND query stats.
+  bind_query_stats_last_scrape_error - Whether the last scrape of BIND query stats resulted in an error (1 for error, 0 for success).
+  bind_query_stats_last_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND qyery stat metrics.
+  bind_query_stats_last_scrape_duration_seconds - Duration of the last scrape of BIND query stats.
 ```
 
 ### Sites
 This collector counts unique hits to individual DNS names.
 
-**IMPORTANT NOTE:** Each DNS name gets its own label and counter. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a whitelist to limit what gets gathered.
+**IMPORTANT NOTE:** Each DNS name gets its own label in `bind_query_sites_name`. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a whitelist to limit what gets gathered.
 
 ```
-  bind_query_sites_number - Queries per DNS name
-  bind_query_sites_total_number - Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.
+  bind_query_sites_names - Queries per DNS name
+  bind_query_sites_total - Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.
   bind_query_sites_scrapes_total - Total number of scrapes for BIND sites stats.
   bind_query_sites_scrape_errors_total - Total number of scrapes errors for BIND sites stats.
-  bind_query_last_sites_scrape_error - Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).
-  bind_query_last_sites_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND sites metrics.
-  bind_query_last_sites_scrape_duration_seconds - Duration of the last scrape of BIND sites stats.
+  bind_query_sites_last_scrape_error - Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).
+  bind_query_sites_last_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND sites metrics.
+  bind_query_sites_last_scrape_duration_seconds - Duration of the last scrape of BIND sites stats.
 ```
 
 ## Contributing
