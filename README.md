@@ -72,14 +72,13 @@ This collector counts the number of DNS queries the DNS server receives by type.
   bind_query_stats_last_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND qyery stat metrics.
 ```
 
-### Sites
+### Names
 This collector counts unique hits to individual DNS names.
 
-**IMPORTANT NOTE:** Each DNS name gets its own label in `bind_query_sites_name`. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a whitelist to limit what gets gathered.
+**IMPORTANT NOTE:** Each DNS name gets its own label in `bind_query_names_all`. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a whitelist to limit what gets gathered.
 
 ```
-  bind_query_stats_last_scrape_duration_seconds - Duration of the last scrape of BIND query stats.
-  bind_query_names_names - Queries per DNS name
+  bind_query_names_all - Queries per DNS name
   bind_query_names_total - Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.
   bind_query_names_scrapes_total - Total number of scrapes for BIND names stats.
   bind_query_names_scrape_errors_total - Total number of scrapes errors for BIND names stats.

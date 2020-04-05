@@ -75,7 +75,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 		prometheus.CounterOpts{
 			Namespace: namespace,
 			Subsystem: "names",
-			Name:      "names",
+			Name:      "all",
 			Help:      "Queries per DNS name",
 		},
 		[]string{"domain"},
