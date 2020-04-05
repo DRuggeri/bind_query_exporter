@@ -12,6 +12,7 @@ import (
 type SitesCollector struct {
 	namespace   string
 	sitesMetric prometheus.CounterVec
+	totalMetric prometheus.Counter
 	stats       map[string]float64
 
 	scrapesTotalMetric              prometheus.Counter
@@ -78,6 +79,16 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 		[]string{"domain"},
 	)
 
+	totalMetric := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Namespace: namespace,
+			Subsystem: "sites_total",
+			Name:      "number",
+			Help:      "Sum of all queries matched (or all queries if not include/exclude filter is present) - is initialized to 0 on start to support increment() detection",
+		},
+	)
+	totalMetric.Add(0)
+
 	scrapesTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
 			Namespace: namespace,
@@ -127,6 +138,7 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 		stats:       stats,
 		namespace:   namespace,
 		sitesMetric: *sitesMetric,
+		totalMetric: totalMetric,
 
 		scrapesTotalMetric:              scrapesTotalMetric,
 		scrapeErrorsTotalMetric:         scrapeErrorsTotalMetric,
@@ -162,9 +174,11 @@ func (c *SitesCollector) Collect(ch chan<- prometheus.Metric) {
 
 	errorMetric := float64(0)
 	for k, v := range c.stats {
+		c.totalMetric.Add(v)
 		c.sitesMetric.WithLabelValues(k).Add(v)
 		delete(c.stats, k)
 	}
+	c.totalMetric.Collect(ch)
 	c.sitesMetric.Collect(ch)
 
 	c.scrapeErrorsTotalMetric.Collect(ch)
@@ -184,6 +198,7 @@ func (c *SitesCollector) Collect(ch chan<- prometheus.Metric) {
 
 func (c *SitesCollector) Describe(ch chan<- *prometheus.Desc) {
 	c.sitesMetric.Describe(ch)
+	c.totalMetric.Describe(ch)
 	c.scrapesTotalMetric.Describe(ch)
 	c.scrapeErrorsTotalMetric.Describe(ch)
 	c.lastScrapeErrorMetric.Describe(ch)

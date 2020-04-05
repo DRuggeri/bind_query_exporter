@@ -76,15 +76,16 @@ This collector counts the number of DNS queries the DNS server receives by type.
 ### Sites
 This collector counts unique hits to individual DNS names.
 
-**IMPORTANT NOTE:** Each DNS name gets its own label and counter. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains!
+**IMPORTANT NOTE:** Each DNS name gets its own label and counter. This causes the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a whitelist to limit what gets gathered.
 
 ```
-  bind_query_site_number - Queries per DNS name
-  bind_query_site_scrapes_total - Total number of scrapes for BIND sites stats.
-  bind_query_site_scrape_errors_total - Total number of scrapes errors for BIND sites stats.
-  bind_query_last_site_scrape_error - Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).
-  bind_query_last_site_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND sites metrics.
-
+  bind_query_sites_number - Queries per DNS name
+  bind_query_sites_total_number - Sum of all queries matched (or all queries if not include/exclude filter is present) - is initialized to 0 on start to support increment() detection
+  bind_query_sites_scrapes_total - Total number of scrapes for BIND sites stats.
+  bind_query_sites_scrape_errors_total - Total number of scrapes errors for BIND sites stats.
+  bind_query_last_sites_scrape_error - Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).
+  bind_query_last_sites_scrape_timestamp - Number of seconds since 1970 since last scrape of BIND sites metrics.
+  bind_query_last_sites_scrape_duration_seconds - Duration of the last scrape of BIND sites stats.
 ```
 
 ## Contributing
