@@ -130,18 +130,18 @@ func main() {
 		*/
 		bogusChan := make(chan string)
 
-		fmt.Println("Sites")
-		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
-		out = make(chan *prometheus.Desc)
-		go eatOutput(out)
-		sitesCollector.Describe(out)
-		close(out)
-
 		fmt.Println("Stats")
 		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &bogusChan)
 		out = make(chan *prometheus.Desc)
 		go eatOutput(out)
 		statsCollector.Describe(out)
+		close(out)
+
+		fmt.Println("Sites")
+		sitesCollector := collectors.NewSitesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		out = make(chan *prometheus.Desc)
+		go eatOutput(out)
+		sitesCollector.Describe(out)
 		close(out)
 
 		os.Exit(0)
