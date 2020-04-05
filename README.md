@@ -80,7 +80,7 @@ This collector counts unique hits to individual DNS names.
 
 ```
   bind_query_sites_number - Queries per DNS name
-  bind_query_sites_total_number - Sum of all queries matched (or all queries if not include/exclude filter is present) - is initialized to 0 on start to support increment() detection
+  bind_query_sites_total_number - Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.
   bind_query_sites_scrapes_total - Total number of scrapes for BIND sites stats.
   bind_query_sites_scrape_errors_total - Total number of scrapes errors for BIND sites stats.
   bind_query_last_sites_scrape_error - Whether the last scrape of BIND sites stats resulted in an error (1 for error, 0 for success).

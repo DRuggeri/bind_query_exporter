@@ -84,7 +84,7 @@ func NewSitesCollector(namespace string, sender *chan string, includeFile string
 			Namespace: namespace,
 			Subsystem: "sites_total",
 			Name:      "number",
-			Help:      "Sum of all queries matched (or all queries if not include/exclude filter is present) - is initialized to 0 on start to support increment() detection",
+			Help:      "Sum of all queries matched. If no include/exclude filter is present, this will match bind_query_stats_total in the stats collector.  It is initialized to 0 to support increment() detection.",
 		},
 	)
 	totalMetric.Add(0)
