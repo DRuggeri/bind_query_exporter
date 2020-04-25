@@ -30,6 +30,14 @@ var (
 		"names.exclude.file", "Path to a file of domain names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Default("").String()
 
+	bindQueryCaptureClient = kingpin.Flag(
+		"names.capture-client", "Enable capturing the client making the query as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Bool()
+
+	bindQueryReverseLookup = kingpin.Flag(
+		"names.reverse-lookup", "When names.capture-client is enabled, enable a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP").Bool()
+
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
 	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats,Names").String()
@@ -138,7 +146,7 @@ func main() {
 		close(out)
 
 		fmt.Println("Names")
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -173,7 +181,7 @@ func main() {
 	if collectorsFilter.Enabled(filters.NamesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)

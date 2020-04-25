@@ -7,11 +7,12 @@ import (
 	"time"
 	"os"
 	"bufio"
+	"net"
 )
 
 type NamesCollector struct {
 	namespace   string
-	namesMetric prometheus.CounterVec
+	namesMetric *prometheus.CounterVec
 	totalMetric prometheus.Counter
 	stats       map[string]float64
 
@@ -22,14 +23,26 @@ type NamesCollector struct {
 	lastScrapeDurationSecondsMetric prometheus.Gauge
 }
 
-func NewNamesCollector(namespace string, sender *chan string, includeFile string, excludeFile string) (*NamesCollector, error) {
+type tailConfig struct {
+	include map[string]bool
+	exclude map[string]bool
+	captureClient bool
+	reverseLookup bool
+}
+
+func NewNamesCollector(namespace string, sender *chan string, includeFile string, excludeFile string, captureClient bool, reverseLookup bool) (*NamesCollector, error) {
 	stats := make(map[string]float64)
-	include := make(map[string]bool)
-	exclude := make(map[string]bool)
+
+	config := tailConfig {
+		include: make(map[string]bool),
+		exclude: make(map[string]bool),
+		captureClient: captureClient,
+		reverseLookup: reverseLookup,
+	}
 
 	if "" != includeFile {
 		log.Infoln("Will only export names that ARE in the file ", includeFile)
-		err := makeList(includeFile, &include)
+		err := makeList(includeFile, &config.include)
 		if err != nil {
 			log.Errorln("Failed to use include file: ", includeFile, err)
 			return nil, err
@@ -37,7 +50,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 	}
 	if "" != excludeFile {
 		log.Infoln("Will only export names that ARE NOT the file ", excludeFile)
-		err := makeList(excludeFile, &exclude)
+		err := makeList(excludeFile, &config.exclude)
 		if err != nil {
 			log.Errorln("Failed to use exclude file: ", excludeFile, err)
 			return nil, err
@@ -45,41 +58,28 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 	}
 
 
-	/* Spin off a thread that will gather our data on every read from the file */
-	go func(sender *chan string, stats *map[string]float64, inc *map[string]bool, exc *map[string]bool) {
-		//22-Mar-2020 14:54:27.568 queries: info: client 192.168.0.1#63519 (www.google.com): query: www.google.com IN A + (192.168.0.100)
-		re := regexp.MustCompile(`query: ([^\s]+)`)
-
-		for line := range *sender {
-			log.Debugln(line)
-			match := re.FindStringSubmatch(line)
-			if len(match) > 0 {
-				name := match[1]
-
-				if len(include) > 0 {
-					if _, ok := include[name]; ok {
-						(*stats)[match[1]]++
-					}
-				} else if len(exclude) > 0 {
-					if _, ok := exclude[name]; !ok {
-						(*stats)[match[1]]++
-					}
-				} else {
-					(*stats)[match[1]]++
-				}
-			}
-		}
-	}(sender, &stats, &include, &exclude)
-
-	namesMetric := prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Namespace: namespace,
-			Subsystem: "names",
-			Name:      "all",
-			Help:      "Queries per DNS name",
-		},
-		[]string{"domain"},
-	)
+	var namesMetric *prometheus.CounterVec
+	if captureClient {
+		namesMetric = prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Subsystem: "names",
+				Name:      "all",
+				Help:      "Queries per DNS name per client",
+			},
+			[]string{"domain", "client"},
+		)
+	} else {
+		namesMetric = prometheus.NewCounterVec(
+			prometheus.CounterOpts{
+				Namespace: namespace,
+				Subsystem: "names",
+				Name:      "all",
+				Help:      "Queries per DNS name",
+			},
+			[]string{"domain"},
+		)
+	}
 
 	totalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
@@ -90,6 +90,50 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 		},
 	)
 	totalMetric.Add(0)
+
+	/* Spin off a thread that will gather our data on every read from the file */
+	go func(sender *chan string, namesMetric *prometheus.CounterVec, totalMetric prometheus.Counter, config *tailConfig) {
+		//22-Mar-2020 14:54:27.568 queries: info: client 192.168.0.1#63519 (www.google.com): query: www.google.com IN A + (192.168.0.100)
+		re := regexp.MustCompile(`client ([^#]+).*query: ([^\s]+)`)
+
+		for line := range *sender {
+			log.Debugln(line)
+			match := re.FindStringSubmatch(line)
+			if len(match) > 0 {
+				increment := false
+				client := match[1]
+				name := match[2]
+
+				if len(config.include) > 0 {
+					if _, ok := config.include[name]; ok {
+						increment = true
+					}
+				} else if len(config.exclude) > 0 {
+					if _, ok := config.exclude[name]; !ok {
+						increment = true
+					}
+				} else {
+					//(*stats)[match[2]]++
+					increment = true
+				}
+
+				if increment {
+					totalMetric.Add(1)
+					if config.reverseLookup {
+						if names, dnsErr := net.LookupAddr(client); dnsErr == nil && len(names) > 0 {
+							client = names[0]
+						}
+					}
+					if config.captureClient {
+						namesMetric.WithLabelValues(name, client).Add(1)
+					} else {
+						namesMetric.WithLabelValues(name).Add(1)
+					}
+				}
+			}
+		}
+	}(sender, namesMetric, totalMetric, &config)
+
 
 	scrapesTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
@@ -139,7 +183,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 	return &NamesCollector{
 		stats:       stats,
 		namespace:   namespace,
-		namesMetric: *namesMetric,
+		namesMetric: namesMetric,
 		totalMetric: totalMetric,
 
 		scrapesTotalMetric:              scrapesTotalMetric,
@@ -175,11 +219,6 @@ func (c *NamesCollector) Collect(ch chan<- prometheus.Metric) {
 	var begun = time.Now()
 
 	errorMetric := float64(0)
-	for k, v := range c.stats {
-		c.totalMetric.Add(v)
-		c.namesMetric.WithLabelValues(k).Add(v)
-		delete(c.stats, k)
-	}
 	c.totalMetric.Collect(ch)
 	c.namesMetric.Collect(ch)
 
