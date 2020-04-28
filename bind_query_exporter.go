@@ -57,13 +57,7 @@ var (
 	authUsername = kingpin.Flag(
 		"web.auth.username", "Username for web interface basic auth. Password is set via $BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD env variable ($BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME)",
 	).Envar("BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME").String()
-
-/*
-	authPassword = kingpin.Flag(
-		"web.auth.password", "Password for web interface basic auth ($BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD)",
-	).Envar("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD").String()
-*/
-	authPassword *string
+	authPassword = ""
 
 	tlsCertFile = kingpin.Flag(
 		"web.tls.cert_file", "Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates, and the CA's certificate ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)",
@@ -103,11 +97,11 @@ func (h *basicAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func prometheusHandler() http.Handler {
 	handler := promhttp.Handler()
 
-	if *authUsername != "" && *authPassword != "" {
+	if *authUsername != "" && authPassword != "" {
 		handler = &basicAuthHandler{
 			handler:  promhttp.Handler().ServeHTTP,
 			username: *authUsername,
-			password: *authPassword,
+			password: authPassword,
 		}
 	}
 
@@ -164,7 +158,7 @@ func main() {
 
 	log.Infoln("Starting bind_query_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
-        *authPassword = os.Getenv("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD")
+        authPassword = os.Getenv("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD")
 
 	fi, err := os.Stat(*bindQueryLogFile)
 	if err != nil {
