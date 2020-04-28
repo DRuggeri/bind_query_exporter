@@ -114,9 +114,7 @@ Flags:
       --web.telemetry-path="/metrics"
                                Path under which to expose Prometheus metrics ($BIND_QUERY_EXPORTER_WEB_TELEMETRY_PATH)
       --web.auth.username=WEB.AUTH.USERNAME
-                               Username for web interface basic auth ($BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME)
-      --web.auth.password=WEB.AUTH.PASSWORD
-                               Password for web interface basic auth ($BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD)
+                               Username for web interface basic auth. Password is set via $BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD env variable ($BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME)
       --web.tls.cert_file=WEB.TLS.CERT_FILE
                                Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates, and the CA's certificate
                                ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)
