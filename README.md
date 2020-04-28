@@ -87,7 +87,7 @@ $ bind_query_exporter <flags>
 ### With Docker
 ```bash
 docker build -t bind_query_exporter .
-docker run -d -p 9197:9197 -v /var/log/bind/queries.log:/var/log/bind/queries.log:ro bind_query_exporter"
+docker run -d -p 9197:9197 -v /var/log/bind:/var/log/bind:ro bind_query_exporter"
 ```
 
 ## Usage
