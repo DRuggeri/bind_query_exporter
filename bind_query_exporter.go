@@ -23,11 +23,11 @@ var (
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
 	bindQueryIncludeFile = kingpin.Flag(
-		"names.include.file", "Path to a file of domain names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)",
+		"names.include.file", "Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE").Default("").String()
 
 	bindQueryExcludeFile = kingpin.Flag(
-		"names.exclude.file", "Path to a file of domain names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
+		"names.exclude.file", "Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Default("").String()
 
 	bindQueryCaptureClient = kingpin.Flag(
@@ -40,7 +40,7 @@ var (
 
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
-	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats,Names").String()
+	).Envar("BIND_QUERY_EXPORTER_FILTER_COLLECTORS").Default("Stats").String()
 
 	metricsNamespace = kingpin.Flag(
 		"metrics.namespace", "Metrics Namespace ($BIND_QUERY_EXPORTER_METRICS_NAMESPACE)",
@@ -174,6 +174,11 @@ func main() {
 	collectorsFilter, err := filters.NewCollectorsFilter(collectorsFilters)
 	if err != nil {
 		log.Error(err)
+		os.Exit(1)
+	}
+
+	if (*bindQueryCaptureClient || *bindQueryReverseLookup) && !collectorsFilter.Enabled(filters.NamesCollector) {
+		log.Error("Error: the Names collector is not enabled, but the parameters to capture client address or perform reverse lookup is set. Did you forget to set --filter.collectors=Names?")
 		os.Exit(1)
 	}
 

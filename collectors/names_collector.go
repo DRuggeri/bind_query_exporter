@@ -67,7 +67,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 				Name:      "all",
 				Help:      "Queries per DNS name per client",
 			},
-			[]string{"domain", "client"},
+			[]string{"name", "client"},
 		)
 	} else {
 		namesMetric = prometheus.NewCounterVec(
@@ -77,7 +77,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 				Name:      "all",
 				Help:      "Queries per DNS name",
 			},
-			[]string{"domain"},
+			[]string{"name"},
 		)
 	}
 
