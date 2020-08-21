@@ -166,7 +166,8 @@ func main() {
 
 	fi, err := os.Stat(*bindQueryLogFile)
 	if err != nil {
-		log.Errorln("Failed to stat ", bindQueryLogFile)
+		log.Errorln("Failed to stat file:", *bindQueryLogFile, err)
+		os.Exit(1)
 	}
 
 	var collectorsFilters []string
