@@ -1,3 +1,4 @@
 bind_query_exporter
 scripts/github_api_token
+scripts/queries.log
 tmp/
