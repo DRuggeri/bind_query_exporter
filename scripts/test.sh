@@ -15,4 +15,6 @@ go build -o "bind_query_exporter" ../
 echo "Running tests..."
 cd ../
 
-go test
+touch queries.log
+BIND_QUERY_EXPORTER_LOG="queries.log" go test
+rm queries.log
