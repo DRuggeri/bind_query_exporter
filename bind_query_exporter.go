@@ -22,6 +22,10 @@ var (
 		"log", "Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)",
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
+	bindQueryPattern = kingpin.Flag(
+		"pattern", "The regular expression pattern with two capturing matches for the client IP and the queried name when the names collector is enabled ($BIND_QUERY_EXPORTER_PATTERN)",
+	).Envar("BIND_QUERY_EXPORTER_LOG").Default(`client(?: @0x[0-9a-f]+)? ([^\s#]+).*query: ([^\s]+)`).String()
+
 	bindQueryIncludeFile = kingpin.Flag(
 		"names.include.file", "Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE").Default("").String()
@@ -143,7 +147,7 @@ func main() {
 		close(out)
 
 		fmt.Println("Names")
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryPattern, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -158,7 +162,7 @@ func main() {
 
 	log.Infoln("Starting bind_query_exporter", version.Info())
 	log.Infoln("Build context", version.BuildContext())
-        authPassword = os.Getenv("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD")
+	authPassword = os.Getenv("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD")
 
 	fi, err := os.Stat(*bindQueryLogFile)
 	if err != nil {
@@ -184,7 +188,7 @@ func main() {
 	if collectorsFilter.Enabled(filters.NamesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryPattern, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)

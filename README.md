@@ -101,6 +101,8 @@ Flags:
   -h, --help                   Show context-sensitive help (also try --help-long and --help-man).
       --log="/var/log/bind/queries.log"
                                Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)
+      --pattern="client(?: @0x[0-9a-f]+)? ([^\\s#]+).*query: ([^\\s]+)"
+                               The regular expression pattern with two capturing matches for the client IP and the queried name ($BIND_QUERY_EXPORTER_PATTERN)
       --names.include.file=""  Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)
       --names.exclude.file=""  Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)
       --names.capture-client   Enable capturing the client making the query as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)
@@ -116,8 +118,8 @@ Flags:
       --web.auth.username=WEB.AUTH.USERNAME
                                Username for web interface basic auth. Password is set via $BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD env variable ($BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME)
       --web.tls.cert_file=WEB.TLS.CERT_FILE
-                               Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates, and the CA's certificate
-                               ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)
+                               Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates,
+                               and the CA's certificate ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)
       --web.tls.key_file=WEB.TLS.KEY_FILE
                                Path to a file that contains the TLS private key (PEM format) ($BIND_QUERY_EXPORTER_WEB_TLS_KEYFILE)
       --printMetrics           Print the metrics this exporter exposes and exits. Default: false ($BIND_QUERY_EXPORTER_PRINT_METRICS)

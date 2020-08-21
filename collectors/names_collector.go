@@ -1,13 +1,13 @@
 package collectors
 
 import (
+	"bufio"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
+	"net"
+	"os"
 	"regexp"
 	"time"
-	"os"
-	"bufio"
-	"net"
 )
 
 type NamesCollector struct {
@@ -24,18 +24,20 @@ type NamesCollector struct {
 }
 
 type tailConfig struct {
-	include map[string]bool
-	exclude map[string]bool
+	pattern       string
+	include       map[string]bool
+	exclude       map[string]bool
 	captureClient bool
 	reverseLookup bool
 }
 
-func NewNamesCollector(namespace string, sender *chan string, includeFile string, excludeFile string, captureClient bool, reverseLookup bool) (*NamesCollector, error) {
+func NewNamesCollector(namespace string, sender *chan string, pattern string, includeFile string, excludeFile string, captureClient bool, reverseLookup bool) (*NamesCollector, error) {
 	stats := make(map[string]float64)
 
-	config := tailConfig {
-		include: make(map[string]bool),
-		exclude: make(map[string]bool),
+	config := tailConfig{
+		pattern:       pattern,
+		include:       make(map[string]bool),
+		exclude:       make(map[string]bool),
 		captureClient: captureClient,
 		reverseLookup: reverseLookup,
 	}
@@ -56,7 +58,6 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 			return nil, err
 		}
 	}
-
 
 	var namesMetric *prometheus.CounterVec
 	if captureClient {
@@ -93,8 +94,7 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 
 	/* Spin off a thread that will gather our data on every read from the file */
 	go func(sender *chan string, namesMetric *prometheus.CounterVec, totalMetric prometheus.Counter, config *tailConfig) {
-		//22-Mar-2020 14:54:27.568 queries: info: client 192.168.0.1#63519 (www.google.com): query: www.google.com IN A + (192.168.0.100)
-		re := regexp.MustCompile(`client ([^#]+).*query: ([^\s]+)`)
+		re := regexp.MustCompile(config.pattern)
 
 		for line := range *sender {
 			log.Debugln(line)
@@ -133,7 +133,6 @@ func NewNamesCollector(namespace string, sender *chan string, includeFile string
 			}
 		}
 	}(sender, namesMetric, totalMetric, &config)
-
 
 	scrapesTotalMetric := prometheus.NewCounter(
 		prometheus.CounterOpts{
@@ -208,7 +207,7 @@ func makeList(fileName string, result *map[string]bool) error {
 		(*result)[scanner.Text()] = true
 	}
 
-	if err:= scanner.Err(); err != nil {
+	if err := scanner.Err(); err != nil {
 		return err
 	}
 
