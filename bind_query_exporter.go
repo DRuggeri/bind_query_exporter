@@ -205,7 +205,7 @@ func main() {
 
 	go func(*[]*chan string) {
 		info := &tail.SeekInfo{Offset: fi.Size(), Whence: 0}
-		t, _ := tail.TailFile(*bindQueryLogFile, tail.Config{Follow: true, Location: info})
+		t, _ := tail.TailFile(*bindQueryLogFile, tail.Config{Follow: true, ReOpen: true, Location: info})
 		for line := range t.Lines {
 			log.Debugln("Read: ", line)
 			for _, consumer := range consumers {
