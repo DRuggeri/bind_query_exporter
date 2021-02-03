@@ -6,7 +6,7 @@ RUN mkdir -p /app/src/github.com/DRuggeri/bind_query_exporter
 ENV GOPATH /app
 WORKDIR /app
 COPY . /app/src/github.com/DRuggeri/bind_query_exporter
-RUN go install github.com/DRuggeri/bind_query_exporter
+RUN cd /app/src/github.com/DRuggeri/bind_query_exporter && go install github.com/DRuggeri/bind_query_exporter
 
 ### STAGE 2: Setup ###
 
