@@ -16,25 +16,29 @@ Note that BIND does not log queries by default, so logging must be turned on bef
 
 ```
 logging {
-  channel bind_log {
-    file "/var/log/bind/bind.log";
+  channel syslog { syslog daemon; severity info; };
+  channel stdout { stderr; severity info; };
+  channel transfer_log {
+    file "/var/log/bind/bind.log" versions 10 size 50M;
     severity info;
     print-category yes;
     print-severity yes;
     print-time yes;
   };
   channel query_log {
-    file "/var/log/bind/queries.log";
-    severity info;
+    file "/var/log/bind/queries.log" versions 10 size 50M;
+    severity debug;
     print-category yes;
     print-severity yes;
     print-time yes;
   };
-  category default { bind_log; };
-  category update { bind_log; };
-  category update-security { bind_log; };
-  category security { bind_log; };
+  category default { syslog; stdout; };
+  category update { syslog; };
+  category update-security { syslog; };
+  category security { syslog; };
   category queries { query_log; };
+  category xfer-in { transfer_log; };
+  category xfer-out { transfer_log; };
   category lame-servers { null; };
 };
 ```
