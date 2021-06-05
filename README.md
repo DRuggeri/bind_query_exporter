@@ -110,8 +110,10 @@ Flags:
       --names.include.file=""  Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)
       --names.exclude.file=""  Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)
       --names.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)
+      --names.reverse-lookup   When capture-client is enabled for the Names collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)
       --stats.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT)
-      --reverse-lookup         When capture-client is enabled for either collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_REVERSE_LOOKUP)
+      --stats.reverse-lookup   When capture-client is enabled for the Stats collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. WARNING: this will create queries to your DNS server which will
+                               probably be seen by this exporter... triggering an infinite loop of lookups if you do not have a DNS cache configured!!!! ($BIND_QUERY_EXPORTER_STATS_REVERSE_LOOKUP)
       --filter.collectors="Stats"
                                Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)
       --metrics.namespace="bind_query"
@@ -139,6 +141,15 @@ Flags:
 ### Stats
 This collector counts the number of DNS queries the DNS server receives by type. When enabled, it can break the number of DNS queries by type down by each client on the network.
 
+**IMPORTANT NOTE** Be very careful when enabling the `--stats.reverse-lookup` option on this collector. You MUST have a caching resolver (such as dnsmasq) configured on this system.
+This is because the exporter does not cache reverse lookup information.
+This means each line read from the log file will result in a DNS query to look the client up.
+At best, this doubles the load on your DNS server.
+At worst, it will cause an infinite lookup loop where a reverse lookup triggers a log entry, which triggers a reverse lookup, which triggers a log entry.
+
+**IMPORTANT NOTE** Consider the size of your client network before enabling the `capture-client` option.
+See the note below in the Names collector for why this is a possible concern for your Prometheus installation.
+
 ```
   bind_query_stats_total - Total queries recieved
   bind_query_stats_total_by_type - Total queries recieved by type of query
@@ -146,9 +157,13 @@ This collector counts the number of DNS queries the DNS server receives by type.
 ```
 
 ### Names
-This collector counts unique hits to individual DNS names by setting the metric `bind_query_names_all{name="site.foo.bar.com",...} 123`. If the `--names.capture-clients` flag is set, the vector will also include the address of the client (or reverse lookup with `--reverse-lookup`).
+This collector counts unique hits to individual DNS names by setting the metric `bind_query_names_all{name="site.foo.bar.com",...} 123`.
+If the `--names.capture-clients` flag is set, the vector will also include the address of the client (or reverse lookup with `--reverse-lookup`).
 
-**IMPORTANT NOTE:** Each DNS name detected will gets its own label in the `bind_query_names_all` vector. Depending on the number of things matched, you may expose yourself to the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) - especially if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a permit list to limit what is gathered. Because of this, the Names collector is not enabled by default.
+**IMPORTANT NOTE:** Each DNS name detected will gets its own label in the `bind_query_names_all` vector.
+Depending on the number of things matched, you may expose yourself to the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) - especially if your nameserver is used as a recursive server or sees hits for many domains!
+Consider using the includeFile as a permit list to limit what is gathered.
+Because of this, the Names collector is not enabled by default.
 
 ```
   bind_query_names_all - Queries per DNS name

@@ -40,13 +40,17 @@ var (
 		"names.capture-client", "Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT").Default("false").Bool()
 
+	bindQueryNamesReverseLookup = kingpin.Flag(
+		"names.reverse-lookup", "When capture-client is enabled for the Names collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP").Default("false").Bool()
+
 	bindQueryStatsCaptureClient = kingpin.Flag(
 		"stats.capture-client", "Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT)",
 	).Envar("BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT").Default("false").Bool()
 
-	bindQueryReverseLookup = kingpin.Flag(
-		"reverse-lookup", "When capture-client is enabled for either collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_REVERSE_LOOKUP)",
-	).Envar("BIND_QUERY_EXPORTER_REVERSE_LOOKUP").Bool()
+	bindQueryStatsReverseLookup = kingpin.Flag(
+		"stats.reverse-lookup", "When capture-client is enabled for the Stats collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. WARNING: this will create queries to your DNS server which will probably be seen by this exporter... triggering an infinite loop of lookups if you do not have a DNS cache configured!!!! ($BIND_QUERY_EXPORTER_STATS_REVERSE_LOOKUP)",
+	).Envar("BIND_QUERY_EXPORTER_STATS_REVERSE_LOOKUP").Default("false").Bool()
 
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
@@ -124,12 +128,8 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
-	matcher := util.LogMatcher{
-		ReverseLookup: *bindQueryReverseLookup,
-		Regex:         regexp.MustCompile(*bindQueryPattern),
-	}
-
 	if *bindQueryPrintMetrics {
+		matcher := util.NewLogMatcher()
 		/* Make a channel and function to send output along */
 		var out chan *prometheus.Desc
 		eatOutput := func(in <-chan *prometheus.Desc) {
@@ -193,6 +193,10 @@ func main() {
 
 	var consumers []*chan string
 	if collectorsFilter.Enabled(filters.NamesCollector) {
+		matcher := util.LogMatcher{
+			ReverseLookup: *bindQueryNamesReverseLookup,
+			Regex:         regexp.MustCompile(*bindQueryPattern),
+		}
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
 		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryNamesCaptureClient)
@@ -203,6 +207,10 @@ func main() {
 		prometheus.MustRegister(namesCollector)
 	}
 	if collectorsFilter.Enabled(filters.StatsCollector) {
+		matcher := util.LogMatcher{
+			ReverseLookup: *bindQueryStatsReverseLookup,
+			Regex:         regexp.MustCompile(*bindQueryPattern),
+		}
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
 		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryStatsCaptureClient)
