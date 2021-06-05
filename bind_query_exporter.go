@@ -125,7 +125,7 @@ func main() {
 	kingpin.Parse()
 
 	matcher := util.LogMatcher{
-		ReverseLookup: *bindQueryReverseLookup && *bindQueryReverseLookup,
+		ReverseLookup: *bindQueryReverseLookup,
 		Regex:         regexp.MustCompile(*bindQueryPattern),
 	}
 
