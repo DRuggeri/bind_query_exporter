@@ -10,12 +10,9 @@ type StatCollector struct {
 	statMetric    prometheus.Counter
 	typesMetric   prometheus.CounterVec
 	clientsMetric prometheus.CounterVec
-	stats         map[string]float64
 }
 
 func NewStatsCollector(namespace string, sender *chan string, matcher *util.LogMatcher, captureClient bool) *StatCollector {
-	stats := make(map[string]float64)
-
 	config := tailConfig{
 		matcher:       matcher,
 		captureClient: captureClient,
@@ -65,7 +62,6 @@ func NewStatsCollector(namespace string, sender *chan string, matcher *util.LogM
 	}(sender, clientsMetric, statMetric, typesMetric, matcher, &config)
 
 	return &StatCollector{
-		stats:         stats,
 		namespace:     namespace,
 		statMetric:    statMetric,
 		typesMetric:   *typesMetric,
