@@ -7,7 +7,7 @@ By default, this exporter's Stats collector doesn't do anything special that you
  - Using the `--names.include.file` to identify if clients on your network are reaching out to forbidden domain names
  - Using the `--names.exclude.file` to see if your authoritative DNS server is receiving queries for domain names you don't own
 
-Depending on the use case, enabling `--names.capture-client` and `--names.reverse-lookup` may be helpful.
+Depending on the use case, enabling `--names.capture-client` and `--reverse-lookup` may be helpful.
 
 
 ## BIND configuration
@@ -142,7 +142,7 @@ This collector counts the number of DNS queries the DNS server receives by type.
 ```
 
 ### Names
-This collector counts unique hits to individual DNS names by setting the metric `bind_query_names_all{name="site.foo.bar.com",...} 123`. If the `--names.capture-clients` flag is set, the vector will also include the address of the client (or reverse lookup with `--names.reverse-lookup`).
+This collector counts unique hits to individual DNS names by setting the metric `bind_query_names_all{name="site.foo.bar.com",...} 123`. If the `--names.capture-clients` flag is set, the vector will also include the address of the client (or reverse lookup with `--reverse-lookup`).
 
 **IMPORTANT NOTE:** Each DNS name detected will gets its own label in the `bind_query_names_all` vector. Depending on the number of things matched, you may expose yourself to the cardinality problems mentioned [here](https://prometheus.io/docs/practices/instrumentation/#do-not-overuse-labels) and [here](https://prometheus.io/docs/practices/naming/#labels) - especially if your nameserver is used as a recursive server or sees hits for many domains! Consider using the includeFile as a permit list to limit what is gathered. Because of this, the Names collector is not enabled by default.
 
