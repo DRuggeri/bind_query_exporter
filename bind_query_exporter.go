@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/hpcloud/tail"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/DRuggeri/bind_query_exporter/collectors"
 	"github.com/DRuggeri/bind_query_exporter/filters"
+	"github.com/DRuggeri/bind_query_exporter/util"
 )
 
 var (
@@ -23,8 +25,8 @@ var (
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
 	bindQueryPattern = kingpin.Flag(
-		"pattern", "The regular expression pattern with two capturing matches for the client IP and the queried name when the names collector is enabled ($BIND_QUERY_EXPORTER_PATTERN)",
-	).Envar("BIND_QUERY_EXPORTER_LOG").Default(`client(?: @0x[0-9a-f]+)? ([^\s#]+).*query: ([^\s]+)`).String()
+		"pattern", "The regular expression pattern with three capturing matches for the client IPi, the queried name, and the query type ($BIND_QUERY_EXPORTER_PATTERN)",
+	).Envar("BIND_QUERY_EXPORTER_LOG").Default(util.LogMatcherDefaultPattern).String()
 
 	bindQueryIncludeFile = kingpin.Flag(
 		"names.include.file", "Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)",
@@ -34,13 +36,17 @@ var (
 		"names.exclude.file", "Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Default("").String()
 
-	bindQueryCaptureClient = kingpin.Flag(
-		"names.capture-client", "Enable capturing the client making the query as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)",
-	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Bool()
+	bindQueryNamesCaptureClient = kingpin.Flag(
+		"names.capture-client", "Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT").Default("false").Bool()
+
+	bindQueryStatsCaptureClient = kingpin.Flag(
+		"stats.capture-client", "Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT)",
+	).Envar("BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT").Default("false").Bool()
 
 	bindQueryReverseLookup = kingpin.Flag(
-		"names.reverse-lookup", "When names.capture-client is enabled, enable a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)",
-	).Envar("BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP").Bool()
+		"reverse-lookup", "When capture-client is enabled for either collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_REVERSE_LOOKUP)",
+	).Envar("BIND_QUERY_EXPORTER_REVERSE_LOOKUP").Bool()
 
 	filterCollectors = kingpin.Flag(
 		"filter.collectors", "Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)",
@@ -118,6 +124,11 @@ func main() {
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
+	matcher := util.LogMatcher{
+		ReverseLookup: *bindQueryReverseLookup && *bindQueryReverseLookup,
+		Regex:         regexp.MustCompile(*bindQueryPattern),
+	}
+
 	if *bindQueryPrintMetrics {
 		/* Make a channel and function to send output along */
 		var out chan *prometheus.Desc
@@ -140,14 +151,14 @@ func main() {
 		bogusChan := make(chan string)
 
 		fmt.Println("Stats")
-		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &bogusChan)
+		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &bogusChan, &matcher, *bindQueryStatsCaptureClient)
 		out = make(chan *prometheus.Desc)
 		go eatOutput(out)
 		statsCollector.Describe(out)
 		close(out)
 
 		fmt.Println("Names")
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, *bindQueryPattern, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryNamesCaptureClient)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -180,16 +191,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if (*bindQueryCaptureClient || *bindQueryReverseLookup) && !collectorsFilter.Enabled(filters.NamesCollector) {
-		log.Error("Error: the Names collector is not enabled, but the parameters to capture client address or perform reverse lookup is set. Did you forget to set --filter.collectors=Names?")
-		os.Exit(1)
-	}
-
 	var consumers []*chan string
 	if collectorsFilter.Enabled(filters.NamesCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, *bindQueryPattern, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryCaptureClient, *bindQueryReverseLookup)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryNamesCaptureClient)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -199,7 +205,7 @@ func main() {
 	if collectorsFilter.Enabled(filters.StatsCollector) {
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &thisChannel)
+		statsCollector := collectors.NewStatsCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryStatsCaptureClient)
 		prometheus.MustRegister(statsCollector)
 	}
 
