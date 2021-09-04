@@ -19,6 +19,8 @@ import (
 	"github.com/DRuggeri/bind_query_exporter/util"
 )
 
+var Version string
+
 var (
 	bindQueryLogFile = kingpin.Flag(
 		"log", "Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)",
@@ -124,7 +126,7 @@ func prometheusHandler() http.Handler {
 
 func main() {
 	log.AddFlags(kingpin.CommandLine)
-	kingpin.Version(version.Print("bind_query_exporter"))
+	kingpin.Version(Version)
 	kingpin.HelpFlag.Short('h')
 	kingpin.Parse()
 
@@ -171,8 +173,7 @@ func main() {
 		os.Exit(0)
 	}
 
-	log.Infoln("Starting bind_query_exporter", version.Info())
-	log.Infoln("Build context", version.BuildContext())
+	log.Infoln("Starting bind_query_exporter", Version)
 	authPassword = os.Getenv("BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD")
 
 	fi, err := os.Stat(*bindQueryLogFile)
