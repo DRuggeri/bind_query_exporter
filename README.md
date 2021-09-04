@@ -89,10 +89,11 @@ $ bind_query_exporter <flags>
 ```
 
 ### With Docker
-```bash
-docker build -t bind_query_exporter .
-docker run -d -p 9197:9197 -v /var/log/bind:/var/log/bind:ro bind_query_exporter"
-```
+An official scratch-based Docker image is built with every tag and pushed to DockerHub and ghcr. Additionally, PRs will be tested by GitHubs actions.
+
+The following images are available for use:
+- [druggeri/bind_query_exporter](https://hub.docker.com/r/druggeri/bind_query_exporter)
+- [ghcr.io/DRuggeri/bind_query_exporter](https://ghcr.io/DRuggeri/bind_query_exporter)
 
 ## Usage
 
