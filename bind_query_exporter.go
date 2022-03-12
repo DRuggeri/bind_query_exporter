@@ -19,7 +19,7 @@ import (
 	"github.com/DRuggeri/bind_query_exporter/util"
 )
 
-var Version string
+var Version = "testing"
 
 var (
 	bindQueryLogFile = kingpin.Flag(
