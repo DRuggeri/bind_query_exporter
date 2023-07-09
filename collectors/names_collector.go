@@ -2,10 +2,11 @@ package collectors
 
 import (
 	"bufio"
+	"os"
+
 	"github.com/DRuggeri/bind_query_exporter/util"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/log"
-	"os"
 )
 
 type NamesCollector struct {
@@ -14,29 +15,48 @@ type NamesCollector struct {
 	totalMetric prometheus.Counter
 }
 
-func NewNamesCollector(namespace string, sender *chan string, matcher *util.LogMatcher, includeFile string, excludeFile string, captureClient bool) (*NamesCollector, error) {
+func NewNamesCollector(namespace string, sender *chan string, matcher *util.LogMatcher, includeFile string, excludeFile string, includeClientsFile string, excludeClientsFile string, captureClient bool) (*NamesCollector, error) {
 	config := tailConfig{
 		matcher:       matcher,
 		captureClient: captureClient,
 	}
 
-	if "" != includeFile {
+	if includeFile != "" {
 		log.Infoln("Will only export names that ARE in the file ", includeFile)
-		matcher.Include = make(map[string]bool)
-		err := makeList(includeFile, &matcher.Include)
+		tmp, err := makeList(includeFile)
 		if err != nil {
 			log.Errorln("Failed to use include file: ", includeFile, err)
 			return nil, err
 		}
+		matcher.Include = tmp
 	}
-	if "" != excludeFile {
-		log.Infoln("Will only export names that ARE NOT the file ", excludeFile)
-		matcher.Exclude = make(map[string]bool)
-		err := makeList(excludeFile, &matcher.Exclude)
+	if excludeFile != "" {
+		log.Infoln("Will only export names that ARE NOT in the file ", excludeFile)
+		tmp, err := makeList(excludeFile)
 		if err != nil {
 			log.Errorln("Failed to use exclude file: ", excludeFile, err)
 			return nil, err
 		}
+		matcher.Exclude = tmp
+	}
+
+	if includeClientsFile != "" {
+		log.Infoln("Will only export names that are queried by clients in the file ", includeClientsFile)
+		tmp, err := makeList(includeClientsFile)
+		if err != nil {
+			log.Errorln("Failed to use include clients file: ", includeClientsFile, err)
+			return nil, err
+		}
+		matcher.IncludeClient = tmp
+	}
+	if excludeClientsFile != "" {
+		log.Infoln("Will ignore names that are queried by clients in the file ", excludeClientsFile)
+		tmp, err := makeList(excludeClientsFile)
+		if err != nil {
+			log.Errorln("Failed to use exclude file: ", excludeClientsFile, err)
+			return nil, err
+		}
+		matcher.ExcludeClient = tmp
 	}
 
 	var namesMetric *prometheus.CounterVec
@@ -94,10 +114,11 @@ func NewNamesCollector(namespace string, sender *chan string, matcher *util.LogM
 	}, nil
 }
 
-func makeList(fileName string, result *map[string]bool) error {
+func makeList(fileName string) (map[string]bool, error) {
+	result := make(map[string]bool)
 	file, err := os.Open(fileName)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	defer file.Close()
@@ -105,14 +126,14 @@ func makeList(fileName string, result *map[string]bool) error {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		log.Debugln("  ", scanner.Text())
-		(*result)[scanner.Text()] = true
+		result[scanner.Text()] = true
 	}
 
 	if err := scanner.Err(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return result, nil
 }
 
 func (c *NamesCollector) Collect(ch chan<- prometheus.Metric) {

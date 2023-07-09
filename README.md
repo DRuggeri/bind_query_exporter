@@ -104,35 +104,45 @@ usage: bind_query_exporter [<flags>]
 
 Flags:
   -h, --help                   Show context-sensitive help (also try --help-long and --help-man).
-      --log="/var/log/bind/queries.log"
+      --log="/var/log/bind/queries.log"  
                                Path of the BIND query log to watch. Defaults to '/var/log/bind/queries.log' ($BIND_QUERY_EXPORTER_LOG)
-      --pattern="client(?: @0x[0-9a-f]+)? ([^\\s#]+).*query: ([^\\s]+).*IN ([^\\s]+)"
-                               The regular expression pattern with three capturing matches for the client IPi, the queried name, and the query type ($BIND_QUERY_EXPORTER_PATTERN)
+      --pattern="client(?: @0x[0-9a-f]+)? ([^\\s#]+).*query: ([^\\s]+).*IN ([^\\s]+)"  
+                               The regular expression pattern with three capturing matches for the client IP, the queried name, and the query type ($BIND_QUERY_EXPORTER_PATTERN)
       --names.include.file=""  Path to a file of DNS names that this exporter WILL export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_FILE)
-      --names.exclude.file=""  Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)
-      --names.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)
-      --names.reverse-lookup   When capture-client is enabled for the Names collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)
-      --stats.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT)
-      --stats.reverse-lookup   When capture-client is enabled for the Stats collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. WARNING: this will create queries to your DNS server which will
-                               probably be seen by this exporter... triggering an infinite loop of lookups if you do not have a DNS cache configured!!!! ($BIND_QUERY_EXPORTER_STATS_REVERSE_LOOKUP)
-      --filter.collectors="Stats"
+      --names.exclude.file=""  Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read.
+                               ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)
+      --names.exclude-clients.file=""  
+                               Path to a file of reverse names or IP addresses that this exporter will ignore. One entry per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_CLIENTS_FILE)
+      --names.include-clients.file=""  
+                               Path to a file of reverse names or IP addresses that this exporter will capture. All others will be ignored. One entry per line will be read.
+                               ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_CLIENTS_FILE)
+      --names.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database!
+                               ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)
+      --names.reverse-lookup   When capture-client is enabled for the Names collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP.
+                               ($BIND_QUERY_EXPORTER_NAMES_REVERSE_LOOKUP)
+      --stats.capture-client   Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database!
+                               ($BIND_QUERY_EXPORTER_STATS_CAPTURE_CLIENT)
+      --stats.reverse-lookup   When capture-client is enabled for the Stats collector, perform a reverse DNS lookup to identify the client in the vector instead of the IP. WARNING: this will create
+                               queries to your DNS server which will probably be seen by this exporter... triggering an infinite loop of lookups if you do not have a DNS cache configured!!!!
+                               ($BIND_QUERY_EXPORTER_STATS_REVERSE_LOOKUP)
+      --filter.collectors="Stats"  
                                Comma separated collectors to enable (Stats,Names) ($BIND_QUERY_EXPORTER_FILTER_COLLECTORS)
-      --metrics.namespace="bind_query"
+      --metrics.namespace="bind_query"  
                                Metrics Namespace ($BIND_QUERY_EXPORTER_METRICS_NAMESPACE)
-      --web.listen-address=":9197"
+      --web.listen-address=":9197"  
                                Address to listen on for web interface and telemetry ($BIND_QUERY_EXPORTER_WEB_LISTEN_ADDRESS)
-      --web.telemetry-path="/metrics"
+      --web.telemetry-path="/metrics"  
                                Path under which to expose Prometheus metrics ($BIND_QUERY_EXPORTER_WEB_TELEMETRY_PATH)
-      --web.auth.username=WEB.AUTH.USERNAME
+      --web.auth.username=WEB.AUTH.USERNAME  
                                Username for web interface basic auth. Password is set via $BIND_QUERY_EXPORTER_WEB_AUTH_PASSWORD env variable ($BIND_QUERY_EXPORTER_WEB_AUTH_USERNAME)
-      --web.tls.cert_file=WEB.TLS.CERT_FILE
-                               Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the server's certificate, any intermediates,
-                               and the CA's certificate ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)
-      --web.tls.key_file=WEB.TLS.KEY_FILE
+      --web.tls.cert_file=WEB.TLS.CERT_FILE  
+                               Path to a file that contains the TLS certificate (PEM format). If the certificate is signed by a certificate authority, the file should be the concatenation of the
+                               server's certificate, any intermediates, and the CA's certificate ($BIND_QUERY_EXPORTER_WEB_TLS_CERTFILE)
+      --web.tls.key_file=WEB.TLS.KEY_FILE  
                                Path to a file that contains the TLS private key (PEM format) ($BIND_QUERY_EXPORTER_WEB_TLS_KEYFILE)
       --printMetrics           Print the metrics this exporter exposes and exits. Default: false ($BIND_QUERY_EXPORTER_PRINT_METRICS)
       --log.level="info"       Only log messages with the given severity or above. Valid levels: [debug, info, warn, error, fatal]
-      --log.format="logger:stderr"
+      --log.format="logger:stderr"  
                                Set the log target and format. Example: "logger:syslog?appname=bob&local=7" or "logger:stdout?json=true"
       --version                Show application version.
 ```

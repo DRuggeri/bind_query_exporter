@@ -27,7 +27,7 @@ var (
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default("/var/log/bind/queries.log").String()
 
 	bindQueryPattern = kingpin.Flag(
-		"pattern", "The regular expression pattern with three capturing matches for the client IPi, the queried name, and the query type ($BIND_QUERY_EXPORTER_PATTERN)",
+		"pattern", "The regular expression pattern with three capturing matches for the client IP, the queried name, and the query type ($BIND_QUERY_EXPORTER_PATTERN)",
 	).Envar("BIND_QUERY_EXPORTER_LOG").Default(util.LogMatcherDefaultPattern).String()
 
 	bindQueryIncludeFile = kingpin.Flag(
@@ -37,6 +37,14 @@ var (
 	bindQueryExcludeFile = kingpin.Flag(
 		"names.exclude.file", "Path to a file of DNS names that this exporter WILL NOT export when the Names filter is enabled. One DNS name per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE)",
 	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_FILE").Default("").String()
+
+	bindQueryExcludeClientsFile = kingpin.Flag(
+		"names.exclude-clients.file", "Path to a file of reverse names or IP addresses that this exporter will ignore. One entry per line will be read. ($BIND_QUERY_EXPORTER_NAMES_EXCLUDE_CLIENTS_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_EXCLUDE_CLIENTS_FILE").Default("").String()
+
+	bindQueryIncludeClientsFile = kingpin.Flag(
+		"names.include-clients.file", "Path to a file of reverse names or IP addresses that this exporter will capture. All others will be ignored. One entry per line will be read. ($BIND_QUERY_EXPORTER_NAMES_INCLUDE_CLIENTS_FILE)",
+	).Envar("BIND_QUERY_EXPORTER_NAMES_INCLUDE_CLIENTS_FILE").Default("").String()
 
 	bindQueryNamesCaptureClient = kingpin.Flag(
 		"names.capture-client", "Enable capturing the client making the client IP or name as part of the vector. WARNING: This will can lead to lots of metrics in your Prometheus database! ($BIND_QUERY_EXPORTER_NAMES_CAPTURE_CLIENT)",
@@ -107,7 +115,6 @@ func (h *basicAuthHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	h.handler(w, r)
-	return
 }
 
 func prometheusHandler() http.Handler {
@@ -160,7 +167,7 @@ func main() {
 		close(out)
 
 		fmt.Println("Names")
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryNamesCaptureClient)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &bogusChan, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryIncludeClientsFile, *bindQueryExcludeClientsFile, *bindQueryNamesCaptureClient)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
@@ -200,7 +207,7 @@ func main() {
 		}
 		thisChannel := make(chan string)
 		consumers = append(consumers, &thisChannel)
-		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryNamesCaptureClient)
+		namesCollector, err := collectors.NewNamesCollector(*metricsNamespace, &thisChannel, &matcher, *bindQueryIncludeFile, *bindQueryExcludeFile, *bindQueryIncludeClientsFile, *bindQueryExcludeClientsFile, *bindQueryNamesCaptureClient)
 		if err != nil {
 			log.Error(err)
 			os.Exit(1)
