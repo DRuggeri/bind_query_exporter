@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"os"
+	"strings"
 
 	"github.com/DRuggeri/bind_query_exporter/util"
 	"github.com/prometheus/client_golang/prometheus"
