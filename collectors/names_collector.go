@@ -99,9 +99,9 @@ func NewNamesCollector(namespace string, sender *chan string, matcher *util.LogM
 			if info.Matched {
 				totalMetric.Add(1)
 				if config.captureClient {
-					namesMetric.WithLabelValues(info.QueryName, info.QueryClient).Add(1)
+					namesMetric.WithLabelValues(strings.ToLower(info.QueryName), info.QueryClient).Add(1)
 				} else {
-					namesMetric.WithLabelValues(info.QueryName).Add(1)
+					namesMetric.WithLabelValues(strings.ToLower(info.QueryName)).Add(1)
 				}
 			}
 		}
