@@ -3,7 +3,7 @@ package collectors
 import (
 	"bufio"
 	"os"
-	"strings"
+    "strings"
 
 	"github.com/DRuggeri/bind_query_exporter/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -100,9 +100,9 @@ func NewNamesCollector(namespace string, sender *chan string, matcher *util.LogM
 			if info.Matched {
 				totalMetric.Add(1)
 				if config.captureClient {
-					namesMetric.WithLabelValues(strings.ToLower(info.QueryName), info.QueryClient).Add(1)
+					namesMetric.WithLabelValues(info.QueryName, info.QueryClient).Add(1)
 				} else {
-					namesMetric.WithLabelValues(strings.ToLower(info.QueryName)).Add(1)
+					namesMetric.WithLabelValues(info.QueryName).Add(1)
 				}
 			}
 		}
@@ -127,7 +127,7 @@ func makeList(fileName string) (map[string]bool, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		log.Debugln("  ", scanner.Text())
-		result[scanner.Text()] = true
+		result[strings.ToLower(scanner.Text())] = true
 	}
 
 	if err := scanner.Err(); err != nil {

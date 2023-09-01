@@ -41,7 +41,7 @@ func (m LogMatcher) ExtractInfo(line string) LogMatch {
 	if len(match) > 0 {
 		result.Matched = true
 		result.QueryClient = match[1]
-		result.QueryName = match[2]
+		result.QueryName = strings.ToLower(match[2])
 		result.QueryType = match[3]
 
 		/* Check if we should avoid a DNS lookup since this name is not
