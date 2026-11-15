@@ -3,6 +3,7 @@ package collectors
 import (
 	"bufio"
 	"os"
+	"strings"
 
 	"github.com/DRuggeri/bind_query_exporter/util"
 	"github.com/prometheus/client_golang/prometheus"
@@ -126,7 +127,7 @@ func makeList(fileName string) (map[string]bool, error) {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		log.Debugln("  ", scanner.Text())
-		result[scanner.Text()] = true
+		result[strings.ToLower(scanner.Text())] = true
 	}
 
 	if err := scanner.Err(); err != nil {
